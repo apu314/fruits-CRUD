@@ -3,47 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Fruit;
+use App\FruitDetails;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
-class FruitController extends Controller
-{
+class FruitController extends Controller {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        $fruits = Fruit::all();
+    public function index() {
+        $fruits = Fruit::with('fruitDetails')->get();
         return response()->json($fruits);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Contracts\Validation\Validator
-     */
-    /*public function create()
-    {
-        //
-    }*/
-
-    public function validator($data) {
-        $rules = [
-            'name' => 'required|min:3|max:50',
-            'size' => 'required|in:pequeño,mediano,grande',
-            'color' => 'min:3|max:50'
-        ];
-
-        $messages = [
-            'name.required' => 'El nombre es requerido',
-            'size.required' => 'El tamaño es requerido',
-        ];
-
-        $validator = Validator::make($data, $rules, $messages);
-        return $validator;
     }
 
     /**
@@ -67,8 +40,18 @@ class FruitController extends Controller
             $fruit->fill($fields);
             $fruit->save();
 
+            $fruitDetails = new FruitDetails();
+            $fruitDetails->fruit_id = $fruit->id;
+            $fruitDetails->size = $request->size;
+
+            if (isset($request->color) && $request->color != '') {
+                $fruitDetails->color = $request->color;
+            }
+
+            $fruitDetails->save();
+
             DB::commit();
-            return response()->json($fruit);
+            return response()->json(Fruit::whereId($fruit->id)->with('fruitDetails')->get());
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -82,25 +65,14 @@ class FruitController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Fruit  $fruit
+     * @param \App\Fruit $fruit
      * @return \Illuminate\Http\Response
      */
-    public function show(Fruit $id) {
-        $fruit = Fruit::find($id);
+    public function show($id) {
+        $fruit = Fruit::whereId($id)->with('fruitDetails')->get();
 
         return response()->json($fruit);
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Fruit  $fruit
-     * @return \Illuminate\Http\Response
-     */
-    /*public function edit(Fruit $fruit)
-    {
-        //
-    }*/
 
     /**
      * Update the specified resource in storage.
@@ -112,19 +84,26 @@ class FruitController extends Controller
      * @throws \Throwable
      */
     public function update(Request $request, $id) {
+        // Validate the request data.
+        $validator = $this->validator($request->all());
+        if ($validator->fails()) {
+            return response()->json($validator->messages(), 400);
+        }
+
         DB::beginTransaction();
         try {
-            $fruit = Fruit::find($id);
-            $fields = $request->only($fruit->getFillable());
-            $fruit->fill($fields);
-            if ($fruit->isDirty()) {
-                $fruit->getDirty();
-                $fruit->save();
-            }
+            $fruit = Fruit::with('fruitDetails')->whereId($id)->first();
+            $fruit->name = $request->name; // Requerido
+            $fruit->save();
+
+            $fruitDetails = FruitDetails::where('fruit_id', $id)->first();
+            $fruitDetails->size = $request->size;
+            $fruitDetails->color = $request->color;
+            $fruit->fruitDetails()->update($request->only($fruitDetails->getFillable()));
 
             DB::commit();
 
-            return response()->json($fruit);
+            return response()->json($fruit->load('fruitDetails'));
         } catch (\Exception $e) {
             DB::rollback();
             throw $e;
@@ -157,5 +136,27 @@ class FruitController extends Controller
             DB::rollback();
             throw $e;
         }
+    }
+
+    /**
+     * Valida que los datos introducidos sean correctos
+     *
+     * @param $data
+     * @return \Illuminate\Contracts\Validation\Validator
+     */
+    public function validator($data) {
+        $rules = [
+            'name' => 'required|min:3|max:50',
+            'size' => 'required|in:pequeño,mediano,grande',
+            'color' => 'min:3|max:50'
+        ];
+
+        $messages = [
+            'name.required' => 'El nombre es requerido',
+            'size.required' => 'El tamaño es requerido',
+        ];
+
+        $validator = Validator::make($data, $rules, $messages);
+        return $validator;
     }
 }

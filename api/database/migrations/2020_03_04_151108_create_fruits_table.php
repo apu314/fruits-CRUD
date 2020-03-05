@@ -16,8 +16,6 @@ class CreateFruitsTable extends Migration
         Schema::create('fruits', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->enum('size', ['pequeño', 'mediano', 'grande']);
-            $table->string('color');
             $table->timestamps();
         });
     }
