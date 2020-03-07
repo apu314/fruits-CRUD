@@ -5,6 +5,12 @@
 </template>
 
 <style>
+
+  *, *:before, *:after {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
   html {
     font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI',
     Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -28,23 +34,12 @@
     font-family: 'Nunito', sans-serif;
   }
 
-  .card {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
 
-    box-shadow: 9px 9px 9px 0 rgba(108,141,194,0.28), -9px -9px 9px 0 rgba(255,255,255,0.82);
-    border-radius: 10px;
 
-    margin-bottom: 20px;
-  }
 
-  *,
-  *:before,
-  *:after {
-    box-sizing: border-box;
-    margin: 0;
-  }
-
+  /**
+   * Buttons
+   */
   .button--green {
     display: inline-block;
     border-radius: 4px;

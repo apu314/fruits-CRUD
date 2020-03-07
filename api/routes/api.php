@@ -18,7 +18,7 @@ Route::get('fruits', 'FruitController@index');
 Route::post('fruit', 'FruitController@store');
 Route::get('fruit/{id}', 'FruitController@show');
 Route::put('fruit/{id}', 'FruitController@update');
-Route::delete('fruit/{id}', 'FruitController@destroy');
+Route::delete('fruit/{id}', 'FruitController@delete');
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();

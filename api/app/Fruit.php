@@ -12,6 +12,8 @@ class Fruit extends Model {
         'name'
     ];
 
+
+
     public function fruitDetails() {
         return $this->hasMany('App\FruitDetails', 'fruit_id', 'id');
     }

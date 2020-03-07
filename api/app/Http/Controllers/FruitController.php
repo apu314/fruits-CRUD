@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Fruit;
 use App\FruitDetails;
+use App\Http\Resources\FruitResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -12,11 +13,14 @@ class FruitController extends Controller {
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function index() {
+        //$fruits = Fruit::with('fruitDetails')->get();
+        //return response()->json($fruits);
+
         $fruits = Fruit::with('fruitDetails')->get();
-        return response()->json($fruits);
+        return FruitResource::collection($fruits);
     }
 
     /**
@@ -51,7 +55,10 @@ class FruitController extends Controller {
             $fruitDetails->save();
 
             DB::commit();
-            return response()->json(Fruit::whereId($fruit->id)->with('fruitDetails')->get());
+            //return response()->json(Fruit::whereId($fruit->id)->with('fruitDetails')->get());
+
+            $fruit = Fruit::whereId($fruit->id)->with('fruitDetails')->get();
+            return FruitResource::collection($fruit);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -121,7 +128,7 @@ class FruitController extends Controller {
      * @throws \Exception
      * @throws \Throwable
      */
-    public function destroy($id) {
+    public function delete($id) {
         DB::beginTransaction();
         try {
             Fruit::find($id)->delete();
