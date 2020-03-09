@@ -27,7 +27,7 @@ class FruitController extends Controller {
      * Store a newly created resource in storage.
      *
      * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      * @throws \Exception
      * @throws \Throwable
      */
@@ -86,7 +86,7 @@ class FruitController extends Controller {
      *
      * @param \Illuminate\Http\Request $request
      * @param \App\Fruit $fruit
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      * @throws \Exception
      * @throws \Throwable
      */
@@ -99,9 +99,9 @@ class FruitController extends Controller {
 
         DB::beginTransaction();
         try {
-            $fruit = Fruit::with('fruitDetails')->whereId($id)->first();
-            $fruit->name = $request->name; // Requerido
-            $fruit->save();
+            $fruit = Fruit::whereId($id)->with('fruitDetails')->first();
+            $fruit->name = $request->name;
+            $fruit->update($request->only($fruit->getFillable()));
 
             $fruitDetails = FruitDetails::where('fruit_id', $id)->first();
             $fruitDetails->size = $request->size;
@@ -110,7 +110,9 @@ class FruitController extends Controller {
 
             DB::commit();
 
-            return response()->json($fruit->load('fruitDetails'));
+            $fruit = Fruit::whereId($id)->with('fruitDetails')->get();
+            return FruitResource::collection($fruit);
+
         } catch (\Exception $e) {
             DB::rollback();
             throw $e;
